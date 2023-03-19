@@ -18,7 +18,7 @@ class GuildConfiguration:
 		:param sql_response:
 		"""
 
-	def _print_content(self):
+	def print_content(self):
 		print(self._sql_response)
 
 
@@ -67,6 +67,13 @@ class SimpleClientBot(commands.Bot):
 		print(f"Logged in as {self.user.name} ({self.user.id})")
 		for guild in self.guilds:
 			print(f"Logged into guild: {guild.name} ({guild.id})")
+
+	@commands.command()
+	async def config(self, context: commands.Context) -> None:
+		gid = context.guild.id
+		config = self.server_config.get_guild_config(gid)
+		config.print_content()
+		await context.reply(config._sql_response)
 
 	def start_client(self, token: str) -> None:
 		"""
