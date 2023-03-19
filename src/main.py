@@ -4,7 +4,7 @@ import discord
 from discord.ext import commands
 
 
-CONFIG_FILE_PATH = 'config.json'
+CONFIG_FILE_PATH = '../config.json'
 
 
 def main():
