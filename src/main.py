@@ -34,6 +34,7 @@ def main():
 		token = json.load(config_file)['token']
 
 	intents = discord.Intents.default()
+	intents.message_content = True
 	client = SimpleClientBot(intents=intents, command_prefix="!")
 	client.start_client(token=token)
 
