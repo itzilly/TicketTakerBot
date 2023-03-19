@@ -18,11 +18,14 @@ def main():
 	intents = discord.Intents.default()
 	client = commands.Bot(intents=intents, command_prefix="!")
 
-	client.run(token=token)
-
 	@client.event
-	async def on_ready(bot):
-		print("Logged in!")
+	async def on_ready():
+		print(f"Logged in as {client.user.name} ({client.user.id})")
+		print("Guilds:")
+		for guild in client.guilds:
+			print(f"Located Guild | {guild.name} ({guild.id})")
+
+	client.run(token=token)
 
 
 if __name__ == '__main__':
