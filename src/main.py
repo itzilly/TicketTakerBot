@@ -12,7 +12,7 @@ def main():
 		with open(CONFIG_FILE_PATH, 'w') as config_file:
 			json.dump({'token': ''}, config_file, indent=2)
 
-	with open('config.json', 'r') as config_file:
+	with open(CONFIG_FILE_PATH, 'r') as config_file:
 		token = json.load(config_file)['token']
 
 	intents = discord.Intents.default()
