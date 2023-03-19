@@ -1,5 +1,6 @@
 import os
 import json
+import logging
 import discord
 from discord.ext import commands
 
@@ -13,9 +14,15 @@ class SimpleClientBot(commands.Bot):
 
 	async def on_ready(self):
 		print(f"Logged in as {self.user.name} ({self.user.id})")
-		print("Guilds:")
 		for guild in self.guilds:
 			print(f"{guild.name} ({guild.id})")
+
+	def start_client(self, token: str):
+		try:
+			self.run(token=token)
+		except discord.LoginFailure:
+			logging.critical("Invalid bot token has been passed, stopping bot")
+			exit(1)
 
 
 def main():
@@ -28,7 +35,7 @@ def main():
 
 	intents = discord.Intents.default()
 	client = SimpleClientBot(intents=intents, command_prefix="!")
-	client.run(token=token)
+	client.start_client(token=token)
 
 
 if __name__ == '__main__':
