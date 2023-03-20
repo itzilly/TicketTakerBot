@@ -222,6 +222,7 @@ class SimpleClientBotCommandCog(commands.Cog):
 		logo_file = discord.File(self.bot.bot_logo_path, filename="TicketTaker.png")
 
 		try:
+			fetch = subprocess.check_output(["git", "fetch"])
 			git_hash = subprocess.check_output(["git", "rev-list", "--count", "--left-only", "@{u}...HEAD"])
 			commits_behind = int(git_hash.strip())
 			current_hash = subprocess.check_output(["git", "rev-parse", "HEAD"]).strip()
