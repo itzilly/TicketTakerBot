@@ -2,10 +2,12 @@ import os
 import json
 import logging
 import sqlite3
+import datetime
+import subprocess
+from typing import Optional
 
 import discord
 from discord.ext import commands
-
 
 CONFIG_FILE_PATH = '../config.json'
 
@@ -30,8 +32,8 @@ class MultiServerConfig:
 		"""
 		self._path = '../data.sql'
 
-		self.connection: sqlite3.Connection = None
-		self.cursor: sqlite3.Cursor = None
+		self.connection: Optional[sqlite3.Connection] = None
+		self.cursor: Optional[sqlite3.Cursor] = None
 		if auto_load:
 			self.load()
 
@@ -50,7 +52,7 @@ class MultiServerConfig:
 		:return
 		"""
 		query = "SELECT * FROM CONFIG_MASTER WHERE GUILD_ID IS (?)"
-		response = self.cursor.execute(query, (guild_id, ))
+		response = self.cursor.execute(query, (guild_id,))
 		item = GuildConfiguration(response)
 		return item
 
@@ -59,9 +61,12 @@ class SimpleClientBot(commands.Bot):
 	"""
 	Simple discord bot aimed to just help start my project
 	"""
+
 	def __init__(self, config: MultiServerConfig, *args, **kwargs):
 		super().__init__(*args, **kwargs)
 		self.server_config = config
+		self.bot_version = '0.0.1'
+		self.bot_logo_path = '../images/TicketTakerLogoScreenshot.png'
 
 	async def on_ready(self) -> None:
 		"""
@@ -94,14 +99,120 @@ class SimpleClientBotCommandCog(commands.Cog):
 		self.bot = bot
 
 	# Adding a command to the cog
-	@commands.command(name="config")
-	async def config_command(self, context: commands.Context):
-		"""the best command in existence"""
-		gid = context.guild.id
-		print(f"Command run from guild {gid}")
-		config = self.bot.server_config.get_guild_config(gid)
-		config.print_content()
-		await context.reply(config._sql_response)
+	@commands.command(name="help")
+	async def help_command(self, context: commands.Context) -> None:
+		"""
+		Sends help message
+		:param context:
+		:return:
+		"""
+		logo_file = discord.File(self.bot.bot_logo_path, filename="TicketTaker.png")
+		help_embed = discord.Embed(
+			title="Ticket Taker Help",
+			timestamp=datetime.datetime.now(),
+			colour=discord.Color(0x0ac940),
+			description=f"Help info for Ticket Taker"
+		)
+		help_embed.add_field(
+			name="Info",
+			value="Commands Prefix: `!`\nUse this prefix to run commands ex: `!help` shows this message"
+		)
+		help_embed.add_field(
+			name="Commands",
+			value="`!help` | Shows this help message\n"
+			      "`!source` | Shows github link for bot's source code\n"
+			      "`!version` | Shows the bot's version"
+
+		)
+		help_embed.set_footer(text=f"TicketTaker {self.bot.bot_version}", icon_url="attachment://TicketTaker.png")
+		await context.channel.send(embed=help_embed, file=logo_file)
+
+	@commands.command(name="source")
+	async def source_command(self, context: commands.Context) -> None:
+		"""
+		Links the bot's source code (github)
+		:param context:
+		:return:
+		"""
+		logo_file = discord.File(self.bot.bot_logo_path, filename="TicketTaker.png")
+		await context.channel.send("View the bot's source here: https://github.com/itzilly/TicketTakerBot")
+
+	# @commands.command(name="version")
+	# async def version_command(self, context: commands.Context) -> None:
+	# 	"""
+	# 	Shows information about the bot's latest version
+	# 	:param context:
+	# 	:return:
+	# 	"""
+	# 	git_hash = subprocess.check_output(["git", "rev-parse", "HEAD"]).decode("utf-8").strip()
+	#
+	# 	if len(git_hash) != 40:
+	# 		await context.channel.send("")
+	#
+	#
+	#
+	# 	# Windows Error
+	# 	if "'git' is not recognized as an internal or external command" in git_hash:
+	# 		git_hash =
+	# 	version = f"Bot Version: {git_hash}"
+	# 	await context.send(version)
+	#
+	#
+	#
+	#
+
+	@commands.command(name="version")
+	async def version_command(self, context: commands.Context) -> None:
+		"""
+		Shows information about the bot's latest version
+		:param context:
+		:return:
+		"""
+		try:
+			git_hash = subprocess.check_output(["git", "rev-list", "--count", "--left-only", "@{u}...HEAD"])
+			commits_behind = int(git_hash.strip())
+			current_hash = subprocess.check_output(["git", "rev-parse", "HEAD"]).strip()[-7]
+		except subprocess.CalledProcessError:
+			logging.error("Git installation not found on host!")
+			commits_behind = None
+			current_hash = None
+
+		version_embed = discord.Embed(
+			title="Ticket Taker Version",
+			timestamp=datetime.datetime.now(),
+			colour=discord.Color(0x001F3F)
+		)
+		description = f"I'm currently on version {self.bot.bot_version}"
+
+		if commits_behind is not None:
+			version_embed.description = f"{description} which is {commits_behind} commits behind my main branch!"
+
+	@commands.command(name="responses")
+	async def responses_command(self, context: commands.Context) -> None:
+		"""
+		Tests a bunch of different ways to respond to a command
+		:param context:
+		:return:
+		"""
+		try:
+			await context.channel.send("context.channel.send")
+		except Exception:
+			logging.error("Couldn't execute 1")
+
+		try:
+			await context.channel.send_message("context.channel.send_message")
+		except Exception:
+			logging.error("Couldn't execute 2")
+
+		try:
+			await context.send("context.send")
+		except Exception:
+			logging.error("Couldn't execute 3")
+
+		try:
+			await context.reply("context.reply")
+		except Exception:
+			logging.error("Couldn't execute 4")
 
 
 def main() -> None:
