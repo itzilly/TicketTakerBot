@@ -160,14 +160,16 @@ class SimpleClientBotCommandCog(commands.Cog):
 		version_embed = discord.Embed(
 			title="Version Info",
 			timestamp=datetime.datetime.now(),
-			colour=discord.Color(0x001F3F)
+			colour=discord.Color(0x001F3F),
 		)
-		version_embed.set_author(name=f"Ticket Taker v{self.bot.bot_version}", icon_url='attachment://TicketTaker.png')
 
 		description = f"Ticket Taker is running version `{self.bot.bot_version}`"
 		if commits_behind is not None:
 			version_embed.description = f"{description} which is {commits_behind} commits behind\n" \
 			                            f"Current commit: `{current_hash}`"
+
+		version_embed.set_footer(text=f"Ticket Taker v{self.bot.bot_version}", icon_url='attachment://TicketTaker.png')
+		
 		await context.reply(embed=version_embed, file=logo_file, mention_author=False)
 
 
