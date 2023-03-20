@@ -6,8 +6,9 @@ import sqlite3
 import datetime
 import subprocess
 
-from discord.ext import commands
 from typing import Optional, Any
+from discord.ext import commands
+from discord import app_commands
 
 CONFIG_FILE_PATH = '../config.json'
 BOT_VERSION = '0.0.1'
@@ -112,8 +113,6 @@ class MultiServerConfig:
 		self.connection.commit()
 
 
-
-
 class SimpleClientBotHelpCommand(commands.HelpCommand):
 	async def send_bot_help(self, mapping):
 		logo_file = discord.File('../images/TicketTakerLogoScreenshot.png', filename="TicketTaker.png")
@@ -148,7 +147,14 @@ class SimpleClientBot(commands.Bot):
 	def __init__(self, config: MultiServerConfig, *args, **kwargs):
 		intents = discord.Intents.default()
 		intents.message_content = True
-		super().__init__(intents=intents, command_prefix="!", *args, **kwargs)
+		prefix = commands.when_mentioned
+		description = "Support Ticket Tool Bot"
+		super().__init__(
+			intents=intents,
+			command_prefix=prefix,
+			description=description,
+			*args, **kwargs
+		)
 
 		self.server_config = config
 		self.bot_version = BOT_VERSION
@@ -163,7 +169,8 @@ class SimpleClientBot(commands.Bot):
 		"""
 		print(f"Logged in as {self.user.name} ({self.user.id})")
 		for guild in self.guilds:
-			print(f"Logged into guild: {guild.name} ({guild.id})")
+			print(f"  Logged into guild: {guild.name} ({guild.id})")
+		await self.tree.sync()
 
 	async def setup_hook(self) -> None:
 		await self.add_cog(SimpleClientBotCommandCog(bot=self))
@@ -185,23 +192,29 @@ class SimpleClientBotCommandCog(commands.Cog):
 	def __init__(self, bot: SimpleClientBot):
 		self.bot = bot
 
-	@commands.command(name="source")
-	async def source_command(self, context: commands.Context) -> None:
+	@app_commands.command(name="source", description="View source code for bot")
+	async def source_command(self, interaction: discord.Interaction) -> None:
 		"""
-		Links the bot's source code (github)
-		:param context:
+		Links the bot's source code (GitHub)
+		:param interaction:
 		:return:
 		"""
-		logo_file = discord.File(self.bot.bot_logo_path, filename="TicketTaker.png")
-		await context.channel.send("View the bot's source here: https://github.com/itzilly/TicketTakerBot")
+		response: discord.InteractionResponse = Optional[interaction.response]
+		await response.send_message(
+			"View the bot's source here: https://github.com/itzilly/TicketTakerBot",
+			suppress_embeds=True
+		)
 
-	@commands.command(name="version")
-	async def version_command(self, context: commands.Context) -> None:
+	@app_commands.command(name="version", description="Show the current version the bot is running")
+	async def version_command(self, interaction: discord.Interaction) -> None:
 		"""
 		Shows information about the bot's latest version
-		:param context:
+		:param interaction:
 		:return:
 		"""
+		response: discord.InteractionResponse = Optional[interaction.response]
+		await response.defer()
+
 		logo_file = discord.File(self.bot.bot_logo_path, filename="TicketTaker.png")
 
 		try:
@@ -212,7 +225,6 @@ class SimpleClientBotCommandCog(commands.Cog):
 		except subprocess.CalledProcessError:
 			logging.error("Git installation not found on host!")
 			commits_behind = None
-			current_hash = None
 			sub_hash = None
 
 		version_embed = discord.Embed(
@@ -228,7 +240,11 @@ class SimpleClientBotCommandCog(commands.Cog):
 
 		version_embed.set_footer(text=f"Ticket Taker v{self.bot.bot_version}", icon_url='attachment://TicketTaker.png')
 
-		await context.reply(embed=version_embed, file=logo_file, mention_author=False)
+		await interaction.edit_original_response(
+			content=None,
+			embed=version_embed,
+			attachments=[logo_file]
+		)
 
 
 def main() -> None:
