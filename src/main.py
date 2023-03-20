@@ -69,13 +69,15 @@ class SimpleClientBotHelpCommand(commands.HelpCommand):
 		)
 		help_embed.add_field(
 			name="Info",
-			value="Commands Prefix: `!`\nUse this prefix to run commands ex: `!help` shows this message"
+			value="Commands Prefix: `!`\nUse this prefix to run commands ex: `!help` shows this message",
+			inline=False
 		)
 		help_embed.add_field(
 			name="Commands",
 			value="`!help` | Shows this help message\n"
 			      "`!source` | Shows github link for bot's source code\n"
-			      "`!version` | Shows the bot's version"
+			      "`!version` | Shows the bot's version",
+			inline=False
 
 		)
 		help_embed.set_footer(text=f"TicketTaker {BOT_VERSION}", icon_url="attachment://TicketTaker.png")
@@ -88,7 +90,10 @@ class SimpleClientBot(commands.Bot):
 	"""
 
 	def __init__(self, config: MultiServerConfig, *args, **kwargs):
-		super().__init__(*args, **kwargs)
+		intents = discord.Intents.default()
+		intents.message_content = True
+		super().__init__(intents=intents, command_prefix="!", *args, **kwargs)
+		
 		self.server_config = config
 		self.bot_version = BOT_VERSION
 		self.bot_logo_path = '../images/TicketTakerLogoScreenshot.png'
@@ -123,34 +128,6 @@ class SimpleClientBot(commands.Bot):
 class SimpleClientBotCommandCog(commands.Cog):
 	def __init__(self, bot: SimpleClientBot):
 		self.bot = bot
-
-	# # Adding a command to the cog
-	# async def help_command(self, context: commands.Context) -> None:
-	# 	"""
-	# 	Sends help message
-	# 	:param context:
-	# 	:return:
-	# 	"""
-	# 	logo_file = discord.File(self.bot.bot_logo_path, filename="TicketTaker.png")
-	# 	help_embed = discord.Embed(
-	# 		title="Ticket Taker Help",
-	# 		timestamp=datetime.datetime.now(),
-	# 		colour=discord.Color(0x0ac940),
-	# 		description=f"Help info for Ticket Taker"
-	# 	)
-	# 	help_embed.add_field(
-	# 		name="Info",
-	# 		value="Commands Prefix: `!`\nUse this prefix to run commands ex: `!help` shows this message"
-	# 	)
-	# 	help_embed.add_field(
-	# 		name="Commands",
-	# 		value="`!help` | Shows this help message\n"
-	# 		      "`!source` | Shows github link for bot's source code\n"
-	# 		      "`!version` | Shows the bot's version"
-	#
-	# 	)
-	# 	help_embed.set_footer(text=f"TicketTaker {self.bot.bot_version}", icon_url="attachment://TicketTaker.png")
-	# 	await context.channel.send(embed=help_embed, file=logo_file)
 
 	@commands.command(name="source")
 	async def source_command(self, context: commands.Context) -> None:
@@ -188,33 +165,7 @@ class SimpleClientBotCommandCog(commands.Cog):
 		if commits_behind is not None:
 			version_embed.description = f"{description} which is {commits_behind} commits behind my main branch!\n" \
 			                            f"Current commit: `{current_hash}"
-
-	@commands.command(name="responses")
-	async def responses_command(self, context: commands.Context) -> None:
-		"""
-		Tests a bunch of different ways to respond to a command
-		:param context:
-		:return:
-		"""
-		try:
-			await context.channel.send("context.channel.send")
-		except Exception:
-			logging.error("Couldn't execute 1")
-
-		try:
-			await context.channel.send_message("context.channel.send_message")
-		except Exception:
-			logging.error("Couldn't execute 2")
-
-		try:
-			await context.send("context.send")
-		except Exception:
-			logging.error("Couldn't execute 3")
-
-		try:
-			await context.reply("context.reply")
-		except Exception:
-			logging.error("Couldn't execute 4")
+		await context.reply(embed=version_embed, mention_author=False)
 
 
 def main() -> None:
@@ -228,7 +179,7 @@ def main() -> None:
 	intents = discord.Intents.default()
 	intents.message_content = True
 	config = MultiServerConfig()
-	client = SimpleClientBot(config=config, intents=intents, command_prefix="!")
+	client = SimpleClientBot(config=config)
 	client.start_client(token=token)
 
 
