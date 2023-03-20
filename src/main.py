@@ -97,9 +97,9 @@ class SimpleClientBot(commands.Bot):
 class SimpleClientBotCommandCog(commands.Cog):
 	def __init__(self, bot: SimpleClientBot):
 		self.bot = bot
+		self.bot.help_command = self.help_command
 
 	# Adding a command to the cog
-	@commands.command(name="help")
 	async def help_command(self, context: commands.Context) -> None:
 		"""
 		Sends help message
@@ -137,30 +137,6 @@ class SimpleClientBotCommandCog(commands.Cog):
 		logo_file = discord.File(self.bot.bot_logo_path, filename="TicketTaker.png")
 		await context.channel.send("View the bot's source here: https://github.com/itzilly/TicketTakerBot")
 
-	# @commands.command(name="version")
-	# async def version_command(self, context: commands.Context) -> None:
-	# 	"""
-	# 	Shows information about the bot's latest version
-	# 	:param context:
-	# 	:return:
-	# 	"""
-	# 	git_hash = subprocess.check_output(["git", "rev-parse", "HEAD"]).decode("utf-8").strip()
-	#
-	# 	if len(git_hash) != 40:
-	# 		await context.channel.send("")
-	#
-	#
-	#
-	# 	# Windows Error
-	# 	if "'git' is not recognized as an internal or external command" in git_hash:
-	# 		git_hash =
-	# 	version = f"Bot Version: {git_hash}"
-	# 	await context.send(version)
-	#
-	#
-	#
-	#
-
 	@commands.command(name="version")
 	async def version_command(self, context: commands.Context) -> None:
 		"""
@@ -185,7 +161,8 @@ class SimpleClientBotCommandCog(commands.Cog):
 		description = f"I'm currently on version {self.bot.bot_version}"
 
 		if commits_behind is not None:
-			version_embed.description = f"{description} which is {commits_behind} commits behind my main branch!"
+			version_embed.description = f"{description} which is {commits_behind} commits behind my main branch!\n" \
+			                            f"Current commit: `{current_hash}"
 
 	@commands.command(name="responses")
 	async def responses_command(self, context: commands.Context) -> None:
