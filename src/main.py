@@ -60,20 +60,21 @@ class SimpleClientBot(commands.Bot):
 	Simple discord bot aimed to just help start my project
 	"""
 	def __init__(self, config: MultiServerConfig, *args, **kwargs):
-		self.server_config = config
 		super().__init__(*args, **kwargs)
+		self.server_config = config
 
-	async def on_ready(self):
+	async def on_ready(self) -> None:
+		"""
+		Runs when the bot has logged in successfully and is
+		ready to preform any task/command etc.
+		:return:
+		"""
 		print(f"Logged in as {self.user.name} ({self.user.id})")
 		for guild in self.guilds:
 			print(f"Logged into guild: {guild.name} ({guild.id})")
 
-	@commands.command()
-	async def config(self, context: commands.Context) -> None:
-		gid = context.guild.id
-		config = self.server_config.get_guild_config(gid)
-		config.print_content()
-		await context.reply(config._sql_response)
+	async def setup_hook(self) -> None:
+		await self.add_cog(SimpleClientBotCommandCog(bot=self))
 
 	def start_client(self, token: str) -> None:
 		"""
@@ -86,6 +87,21 @@ class SimpleClientBot(commands.Bot):
 		except discord.LoginFailure:
 			logging.critical("Invalid bot token has been passed, stopping bot")
 			exit(1)
+
+
+class SimpleClientBotCommandCog(commands.Cog):
+	def __init__(self, bot: SimpleClientBot):
+		self.bot = bot
+
+	# Adding a command to the cog
+	@commands.command(name="config")
+	async def config_command(self, context: commands.Context):
+		"""the best command in existence"""
+		gid = context.guild.id
+		print(f"Command run from guild {gid}")
+		config = self.bot.server_config.get_guild_config(gid)
+		config.print_content()
+		await context.reply(config._sql_response)
 
 
 def main() -> None:
