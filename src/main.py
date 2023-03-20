@@ -43,19 +43,75 @@ class MultiServerConfig:
 		Loads the config database
 		:return:
 		"""
+		self._preload()
 		self.connection = sqlite3.Connection(self._path)
 		self.cursor = self.connection.cursor()
 
-	def get_guild_config(self, guild_id: int) -> GuildConfiguration:
+	def _preload(self) -> None:
+		command = """
+		CREATE TABLE IF NOT EXISTS GUILD_IDS (
+			ID INTEGER PRIMARY KEY,
+			GUILD_ID INTEGER UNIQUE
+		)
+		"""
+		self.cursor.execute(command)
+
+	def get_guild_config(self, guild_id: int) -> Optional[GuildConfiguration]:
 		"""
 		Retrieve a guild's configuration file
 		:param guild_id:
 		:return
 		"""
+		try:
+			data = self._retrieve_guild_config(guild_id)
+			item = GuildConfiguration(data)
+			return item
+		except sqlite3.OperationalError as e:
+			if "no such table: CONFIG_MASTER" in str(e):
+				logging.debug(f"No config table found for guild {guild_id}")
+				self._generate_guild_config(guild_id)
+
+	def _retrieve_guild_config(self, guild_id: int):
 		query = "SELECT * FROM CONFIG_MASTER WHERE GUILD_ID IS (?)"
 		response = self.cursor.execute(query, (guild_id,))
-		item = GuildConfiguration(response)
-		return item
+		return response
+
+	def _generate_guild_config(self, guild_id: int) -> None:
+
+		# Check if a row with the specified guild_id already exists
+		command = "SELECT COUNT(*) FROM GUILD_CONFIGS WHERE GUILD_ID = ?"
+		self.cursor.execute(command, (guild_id,))
+		count = self.cursor.fetchone()[0]
+		if count > 0:
+			raise ValueError(f"A row with guild_id={guild_id} already exists in GUILD_CONFIGS")
+
+		# Create guild configs table
+		command = """
+		CREATE TABLE IF NOT EXISTS GUILD_CONFIGS (
+			ID INTEGER PRIMARY KEY,
+			GUILD_ID INTEGER UNIQUE,
+			TICKET_SECTION_ID INTEGER,
+			CREATE_TICKET_MESSAGE_ID INTEGER
+		)
+		"""
+		self.cursor.execute(command)
+
+		# Create entry for guild
+		command = """
+		INSERT INTO GUILD_CONFIGS (
+			GUILD_ID,
+			TICKET_SECTION_ID,
+			CREATE_TICKET_MESSAGE_ID
+		) VALUES (
+			?,
+			NULL,
+			NULL
+		)
+		"""
+		self.cursor.execute(command, (guild_id,))
+		self.connection.commit()
+
+
 
 
 class SimpleClientBotHelpCommand(commands.HelpCommand):
