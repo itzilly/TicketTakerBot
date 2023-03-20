@@ -1,15 +1,16 @@
 import os
 import json
+import discord
 import logging
 import sqlite3
 import datetime
 import subprocess
-from typing import Optional
 
-import discord
 from discord.ext import commands
+from typing import Optional, Any
 
 CONFIG_FILE_PATH = '../config.json'
+BOT_VERSION = '0.0.1'
 
 
 class GuildConfiguration:
@@ -57,6 +58,30 @@ class MultiServerConfig:
 		return item
 
 
+class SimpleClientBotHelpCommand(commands.HelpCommand):
+	async def send_bot_help(self, mapping):
+		logo_file = discord.File('../images/TicketTakerLogoScreenshot.png', filename="TicketTaker.png")
+		help_embed = discord.Embed(
+			title="Ticket Taker Help",
+			timestamp=datetime.datetime.now(),
+			colour=discord.Color(0x0ac940),
+			description=f"Help info for Ticket Taker"
+		)
+		help_embed.add_field(
+			name="Info",
+			value="Commands Prefix: `!`\nUse this prefix to run commands ex: `!help` shows this message"
+		)
+		help_embed.add_field(
+			name="Commands",
+			value="`!help` | Shows this help message\n"
+			      "`!source` | Shows github link for bot's source code\n"
+			      "`!version` | Shows the bot's version"
+
+		)
+		help_embed.set_footer(text=f"TicketTaker {BOT_VERSION}", icon_url="attachment://TicketTaker.png")
+		await self.context.send(embed=help_embed, file=logo_file)
+
+
 class SimpleClientBot(commands.Bot):
 	"""
 	Simple discord bot aimed to just help start my project
@@ -65,8 +90,9 @@ class SimpleClientBot(commands.Bot):
 	def __init__(self, config: MultiServerConfig, *args, **kwargs):
 		super().__init__(*args, **kwargs)
 		self.server_config = config
-		self.bot_version = '0.0.1'
+		self.bot_version = BOT_VERSION
 		self.bot_logo_path = '../images/TicketTakerLogoScreenshot.png'
+		self.help_command = SimpleClientBotHelpCommand()
 
 	async def on_ready(self) -> None:
 		"""
@@ -97,35 +123,34 @@ class SimpleClientBot(commands.Bot):
 class SimpleClientBotCommandCog(commands.Cog):
 	def __init__(self, bot: SimpleClientBot):
 		self.bot = bot
-		self.bot.help_command = self.help_command
 
-	# Adding a command to the cog
-	async def help_command(self, context: commands.Context) -> None:
-		"""
-		Sends help message
-		:param context:
-		:return:
-		"""
-		logo_file = discord.File(self.bot.bot_logo_path, filename="TicketTaker.png")
-		help_embed = discord.Embed(
-			title="Ticket Taker Help",
-			timestamp=datetime.datetime.now(),
-			colour=discord.Color(0x0ac940),
-			description=f"Help info for Ticket Taker"
-		)
-		help_embed.add_field(
-			name="Info",
-			value="Commands Prefix: `!`\nUse this prefix to run commands ex: `!help` shows this message"
-		)
-		help_embed.add_field(
-			name="Commands",
-			value="`!help` | Shows this help message\n"
-			      "`!source` | Shows github link for bot's source code\n"
-			      "`!version` | Shows the bot's version"
-
-		)
-		help_embed.set_footer(text=f"TicketTaker {self.bot.bot_version}", icon_url="attachment://TicketTaker.png")
-		await context.channel.send(embed=help_embed, file=logo_file)
+	# # Adding a command to the cog
+	# async def help_command(self, context: commands.Context) -> None:
+	# 	"""
+	# 	Sends help message
+	# 	:param context:
+	# 	:return:
+	# 	"""
+	# 	logo_file = discord.File(self.bot.bot_logo_path, filename="TicketTaker.png")
+	# 	help_embed = discord.Embed(
+	# 		title="Ticket Taker Help",
+	# 		timestamp=datetime.datetime.now(),
+	# 		colour=discord.Color(0x0ac940),
+	# 		description=f"Help info for Ticket Taker"
+	# 	)
+	# 	help_embed.add_field(
+	# 		name="Info",
+	# 		value="Commands Prefix: `!`\nUse this prefix to run commands ex: `!help` shows this message"
+	# 	)
+	# 	help_embed.add_field(
+	# 		name="Commands",
+	# 		value="`!help` | Shows this help message\n"
+	# 		      "`!source` | Shows github link for bot's source code\n"
+	# 		      "`!version` | Shows the bot's version"
+	#
+	# 	)
+	# 	help_embed.set_footer(text=f"TicketTaker {self.bot.bot_version}", icon_url="attachment://TicketTaker.png")
+	# 	await context.channel.send(embed=help_embed, file=logo_file)
 
 	@commands.command(name="source")
 	async def source_command(self, context: commands.Context) -> None:
