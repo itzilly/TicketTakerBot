@@ -151,11 +151,13 @@ class SimpleClientBotCommandCog(commands.Cog):
 		try:
 			git_hash = subprocess.check_output(["git", "rev-list", "--count", "--left-only", "@{u}...HEAD"])
 			commits_behind = int(git_hash.strip())
-			current_hash = subprocess.check_output(["git", "rev-parse", "HEAD"]).strip()[-7:]
+			current_hash = subprocess.check_output(["git", "rev-parse", "HEAD"]).strip()
+			sub_hash = current_hash.decode('UTF-8')[-7:]
 		except subprocess.CalledProcessError:
 			logging.error("Git installation not found on host!")
 			commits_behind = None
 			current_hash = None
+			sub_hash = None
 
 		version_embed = discord.Embed(
 			title="Version Info",
@@ -166,10 +168,10 @@ class SimpleClientBotCommandCog(commands.Cog):
 		description = f"Ticket Taker is running version `{self.bot.bot_version}`"
 		if commits_behind is not None:
 			version_embed.description = f"{description} which is {commits_behind} commits behind\n" \
-			                            f"Current commit: `{current_hash}`"
+			                            f"Current commit: `{sub_hash}`"
 
 		version_embed.set_footer(text=f"Ticket Taker v{self.bot.bot_version}", icon_url='attachment://TicketTaker.png')
-		
+
 		await context.reply(embed=version_embed, file=logo_file, mention_author=False)
 
 
