@@ -199,7 +199,7 @@ class SimpleClientBotCommandCog(commands.Cog):
 		:param interaction:
 		:return:
 		"""
-		response: discord.InteractionResponse = Optional[interaction.response]
+		response: Optional[discord.InteractionResponse | Any] = interaction.response
 		await response.send_message(
 			"View the bot's source here: https://github.com/itzilly/TicketTakerBot",
 			suppress_embeds=True
@@ -212,7 +212,7 @@ class SimpleClientBotCommandCog(commands.Cog):
 		:param interaction:
 		:return:
 		"""
-		response: discord.InteractionResponse = Optional[interaction.response]
+		response: Optional[discord.InteractionResponse | Any] = interaction.response
 		await response.defer()
 
 		logo_file = discord.File(self.bot.bot_logo_path, filename="TicketTaker.png")
