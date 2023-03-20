@@ -240,7 +240,7 @@ class SimpleClientBotCommandCog(commands.Cog):
 
 		description = f"Ticket Taker is running version `{self.bot.bot_version}`"
 		if commits_behind is not None:
-			version_embed.description = f"{description} which is {commits_behind} commits behind\n" \
+			version_embed.description = f"{description} which is {commits_behind} commit(s) behind\n" \
 			                            f"Current commit: `{sub_hash}`"
 
 		version_embed.set_footer(text=f"Ticket Taker v{self.bot.bot_version}", icon_url='attachment://TicketTaker.png')
