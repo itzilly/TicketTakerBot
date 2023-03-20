@@ -93,7 +93,7 @@ class SimpleClientBot(commands.Bot):
 		intents = discord.Intents.default()
 		intents.message_content = True
 		super().__init__(intents=intents, command_prefix="!", *args, **kwargs)
-		
+
 		self.server_config = config
 		self.bot_version = BOT_VERSION
 		self.bot_logo_path = '../images/TicketTakerLogoScreenshot.png'
@@ -146,26 +146,29 @@ class SimpleClientBotCommandCog(commands.Cog):
 		:param context:
 		:return:
 		"""
+		logo_file = discord.File(self.bot.bot_logo_path, filename="TicketTaker.png")
+
 		try:
 			git_hash = subprocess.check_output(["git", "rev-list", "--count", "--left-only", "@{u}...HEAD"])
 			commits_behind = int(git_hash.strip())
-			current_hash = subprocess.check_output(["git", "rev-parse", "HEAD"]).strip()[-7]
+			current_hash = subprocess.check_output(["git", "rev-parse", "HEAD"]).strip()[-7:]
 		except subprocess.CalledProcessError:
 			logging.error("Git installation not found on host!")
 			commits_behind = None
 			current_hash = None
 
 		version_embed = discord.Embed(
-			title="Ticket Taker Version",
+			title="Version Info",
 			timestamp=datetime.datetime.now(),
 			colour=discord.Color(0x001F3F)
 		)
-		description = f"I'm currently on version {self.bot.bot_version}"
+		version_embed.set_author(name=f"Ticket Taker v{self.bot.bot_version}", url="attachment://TicketTaker.png")
 
+		description = f"Ticket Taker is running version `{self.bot.bot_version}`"
 		if commits_behind is not None:
-			version_embed.description = f"{description} which is {commits_behind} commits behind my main branch!\n" \
-			                            f"Current commit: `{current_hash}"
-		await context.reply(embed=version_embed, mention_author=False)
+			version_embed.description = f"{description} which is {commits_behind} commits behind\n" \
+			                            f"Current commit: `{current_hash}`"
+		await context.reply(embed=version_embed, file=logo_file, mention_author=False)
 
 
 def main() -> None:
