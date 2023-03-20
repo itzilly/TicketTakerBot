@@ -162,7 +162,7 @@ class SimpleClientBotCommandCog(commands.Cog):
 			timestamp=datetime.datetime.now(),
 			colour=discord.Color(0x001F3F)
 		)
-		version_embed.set_author(name=f"Ticket Taker v{self.bot.bot_version}", url="attachment://TicketTaker.png")
+		version_embed.set_author(name=f"Ticket Taker v{self.bot.bot_version}", icon_url='attachment://TicketTaker.png')
 
 		description = f"Ticket Taker is running version `{self.bot.bot_version}`"
 		if commits_behind is not None:
