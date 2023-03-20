@@ -113,32 +113,6 @@ class MultiServerConfig:
 		self.connection.commit()
 
 
-class SimpleClientBotHelpCommand(commands.HelpCommand):
-	async def send_bot_help(self, mapping):
-		logo_file = discord.File('../images/TicketTakerLogoScreenshot.png', filename="TicketTaker.png")
-		help_embed = discord.Embed(
-			title="Ticket Taker Help",
-			timestamp=datetime.datetime.now(),
-			colour=discord.Color(0x0ac940),
-			description=f"Help info for Ticket Taker"
-		)
-		help_embed.add_field(
-			name="Info",
-			value="Commands Prefix: `!`\nUse this prefix to run commands ex: `!help` shows this message",
-			inline=False
-		)
-		help_embed.add_field(
-			name="Commands",
-			value="`!help` | Shows this help message\n"
-			      "`!source` | Shows github link for bot's source code\n"
-			      "`!version` | Shows the bot's version",
-			inline=False
-
-		)
-		help_embed.set_footer(text=f"TicketTaker {BOT_VERSION}", icon_url="attachment://TicketTaker.png")
-		await self.context.send(embed=help_embed, file=logo_file)
-
-
 class SimpleClientBot(commands.Bot):
 	"""
 	Simple discord bot aimed to just help start my project
@@ -159,7 +133,6 @@ class SimpleClientBot(commands.Bot):
 		self.server_config = config
 		self.bot_version = BOT_VERSION
 		self.bot_logo_path = '../images/TicketTakerLogoScreenshot.png'
-		self.help_command = SimpleClientBotHelpCommand()
 
 	async def on_ready(self) -> None:
 		"""
@@ -191,6 +164,37 @@ class SimpleClientBot(commands.Bot):
 class SimpleClientBotCommandCog(commands.Cog):
 	def __init__(self, bot: SimpleClientBot):
 		self.bot = bot
+
+	@app_commands.command(name="help", description="Show help for Ticket Taker Bot")
+	async def help_command(self, interaction: discord.Interaction) -> None:
+		"""
+		Shows help message for the bot
+		:param interaction:
+		:return:
+		"""
+		response: Optional[discord.InteractionResponse | Any] = interaction.response
+		logo_file = discord.File('../images/TicketTakerLogoScreenshot.png', filename="TicketTaker.png")
+		help_embed = discord.Embed(
+			title="Ticket Taker Help",
+			timestamp=datetime.datetime.now(),
+			colour=discord.Color(0x0ac940),
+			description=f"Help info for Ticket Taker"
+		)
+		help_embed.add_field(
+			name="Info",
+			value="Commands Prefix: `!`\nUse this prefix to run commands ex: `!help` shows this message",
+			inline=False
+		)
+		help_embed.add_field(
+			name="Commands",
+			value="`!help` | Shows this help message\n"
+			      "`!source` | Shows github link for bot's source code\n"
+			      "`!version` | Shows the bot's version",
+			inline=False
+
+		)
+		help_embed.set_footer(text=f"TicketTaker {BOT_VERSION}", icon_url="attachment://TicketTaker.png")
+		await response.send_message(embed=help_embed, file=logo_file)
 
 	@app_commands.command(name="source", description="View source code for bot")
 	async def source_command(self, interaction: discord.Interaction) -> None:
