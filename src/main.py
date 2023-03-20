@@ -43,11 +43,11 @@ class MultiServerConfig:
 		Loads the config database
 		:return:
 		"""
-		self._preload()
 		self.connection = sqlite3.Connection(self._path)
 		self.cursor = self.connection.cursor()
+		self._postload()
 
-	def _preload(self) -> None:
+	def _postload(self) -> None:
 		command = """
 		CREATE TABLE IF NOT EXISTS GUILD_IDS (
 			ID INTEGER PRIMARY KEY,
