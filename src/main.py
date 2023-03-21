@@ -146,7 +146,13 @@ class SimpleClientBot(commands.Bot):
 		await self.tree.sync()
 
 	async def setup_hook(self) -> None:
-		await self.add_cog(SimpleClientBotCommandCog(bot=self))
+		default_cogs = [
+			SimpleClientBot,
+			SimpleClientBotEventCog
+		]
+		for cog in default_cogs:
+			logging.debug(f"Loading cog {cog.__name__}")
+			await self.add_cog(cog(bot=self))
 
 	def start_client(self, token: str) -> None:
 		"""
@@ -250,6 +256,15 @@ class SimpleClientBotCommandCog(commands.Cog):
 			embed=version_embed,
 			attachments=[logo_file]
 		)
+
+
+class SimpleClientBotEventCog(commands.Cog):
+	def __init__(self, bot: SimpleClientBot):
+		self.bot = bot
+
+	@commands.Cog.listener()
+	async def on_guild_join(self, guild: discord.Guild):
+		print(f"Joined a guild: {guild.name}")
 
 
 def main() -> None:
