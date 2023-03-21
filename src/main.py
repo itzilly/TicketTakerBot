@@ -60,7 +60,7 @@ class MultiServerConfig:
 		self.cursor.execute(command)
 
 		command = f"""
-		CREATE TABLE GUILD_CONFIGS (
+		CREATE TABLE IF NOT EXISTS GUILD_CONFIGS (
 			id INTEGER PRIMARY KEY,
 			guild_id INTEGER UNIQUE,
 			config JSON NOT NULL DEFAULT {self._get_default_config(version=1)}
