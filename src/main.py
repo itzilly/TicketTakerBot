@@ -59,15 +59,15 @@ class MultiServerConfig:
 		"""
 		self.cursor.execute(command)
 
-		command = """
+		command = f"""
 		CREATE TABLE GUILD_CONFIGS (
 			id INTEGER PRIMARY KEY,
 			guild_id INTEGER UNIQUE,
-			config JSON NOT NULL DEFAULT %s
+			config JSON NOT NULL DEFAULT {self._get_default_config(version=1)}
 		);
 		"""
-		default_config = self._get_default_config(version=1)
-		self.cursor.execute(command, (default_config, ))
+		print(command)
+		self.cursor.execute(command)
 		self.connection.commit()
 
 	def get_guild_config(self, guild_id: int) -> Optional[str]:
