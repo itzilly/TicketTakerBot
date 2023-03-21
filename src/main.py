@@ -164,7 +164,7 @@ class MultiServerConfig:
 
 		match version:
 			case 1:
-				return json.dumps(version_1_dict)
+				return f"'{json.dumps(version_1_dict)}'"
 
 		raise ValueError(f"Invalid default config version number in _get_default_config(self, version: int): {version}")
 
