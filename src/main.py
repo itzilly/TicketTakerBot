@@ -147,7 +147,7 @@ class SimpleClientBot(commands.Bot):
 
 	async def setup_hook(self) -> None:
 		default_cogs = [
-			SimpleClientBot,
+			SimpleClientBotCommandCog,
 			SimpleClientBotEventCog
 		]
 		for cog in default_cogs:
