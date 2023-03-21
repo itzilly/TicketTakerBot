@@ -63,12 +63,11 @@ class MultiServerConfig:
 		CREATE TABLE GUILD_CONFIGS (
 			id INTEGER PRIMARY KEY,
 			guild_id INTEGER UNIQUE,
-			config JSON NOT NULL
+			config JSON NOT NULL DEFAULT %s
 		);
 		"""
 		default_config = self._get_default_config(version=1)
-		self.cursor.execute(command)
-		self.cursor.execute("ALTER TABLE GUILD_CONFIGS ALTER COLUMN config SET DEFAULT %s", (default_config, ))
+		self.cursor.execute(command, (default_config, ))
 		self.connection.commit()
 
 	def get_guild_config(self, guild_id: int) -> Optional[str]:
