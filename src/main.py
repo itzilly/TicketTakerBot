@@ -1,5 +1,6 @@
 import os
 import json
+import pytz
 import discord
 import logging
 import sqlite3
@@ -33,6 +34,7 @@ class MultiServerConfig:
 		:param auto_load: Allows you to load later (required for bot)
 		"""
 		self._path = '../data.sql'
+		self.pytz_utc = pytz.UTC
 
 		self.connection: Optional[sqlite3.Connection] = None
 		self.cursor: Optional[sqlite3.Cursor] = None
@@ -58,17 +60,16 @@ class MultiServerConfig:
 		self.cursor.execute(command)
 
 		command = """
-		CREATE TABLE IF NOT EXISTS GUILD_CONFIGS (
-			ID INTEGER PRIMARY KEY,
-			GUILD_ID INTEGER UNIQUE,
-			TICKET_SECTION_ID INTEGER,
-			CREATE_TICKET_MESSAGE_ID INTEGER
-		)
+			CREATE TABLE GUILD_CONFIGS (
+				id INTEGER PRIMARY KEY,
+				guild_id INTEGER NOT NULL,
+				config TEXT NOT NULL DEFAULT ?
+			)
 		"""
-		self.cursor.execute(command)
+		self.cursor.execute(command, (self._get_default_config(1), ))
 		self.connection.commit()
 
-	def get_guild_config(self, guild_id: int) -> Optional[GuildConfiguration]:
+	def get_guild_config(self, guild_id: int) -> Optional[str]:
 		"""
 		Retrieve a guild's configuration file
 		:param guild_id:
@@ -76,17 +77,52 @@ class MultiServerConfig:
 		"""
 		try:
 			data = self._retrieve_guild_config(guild_id)
-			item = GuildConfiguration(data)
-			return item
+			return json.loads(data)
 		except sqlite3.OperationalError as e:
 			if "no such table: CONFIG_MASTER" in str(e):
 				logging.debug(f"No config table found for guild {guild_id}")
 				self._generate_guild_config(guild_id)
+				raise SystemError(f"Unable to locate table for guild {guild_id}")
+		except json.JSONDecodeError as e:
+			raise ValueError(f"Invalid json when parsing database config for {guild_id}: {e}")
+
+	def sync_guild_ids(self, guilds: list[int]):
+		"""
+		This ensures that the configs are up-to-date
+		with all guild id's the bot is in. This also will
+		ensure that a row exists for each guild in the
+		GUILD_CONFIGS table.
+		"""
+		for guild_id in guilds:
+			self.sync_guild_id(guild_id)
+
+	def sync_guild_id(self, guild_id: int) -> None:
+		"""
+		This ensures that the guild id will have an
+		empty/existing config row in the MASTER_CONFIG table.
+		"""
+		try:
+			command = "SELECT COUNT(*) FROM GUILD_CONFIGS WHERE GUILD_ID = ?"
+			result = self.cursor.execute(command, (guild_id,))
+			count = result.fetchone()
+			print(count)
+		except sqlite3.OperationalError as e:
+			logging.error(f"Error syncing guild id: {guild_id}: ")
+			logging.error(e)
+		except Exception as e:
+			logging.error(f"Unknown error syncing guild id: {guild_id}")
+			logging.error(e)
+		self._ensure_guild_data(guild_id)
+
+	def _ensure_guild_data(self, guild_id: int):
+		"""
+		Ensures that the guild id has a row in the master config table
+		"""
 
 	def _retrieve_guild_config(self, guild_id: int):
-		query = "SELECT * FROM CONFIG_MASTER WHERE GUILD_ID IS (?)"
+		query = "SELECT config FROM CONFIG_MASTER WHERE GUILD_ID IS (?)"
 		response = self.cursor.execute(query, (guild_id,))
-		return response
+		return response.fetchone()
 
 	def _generate_guild_config(self, guild_id: int) -> None:
 
@@ -111,6 +147,25 @@ class MultiServerConfig:
 		"""
 		self.cursor.execute(command, (guild_id,))
 		self.connection.commit()
+
+	def _get_default_config(self, version: int):
+		time_generated = datetime.datetime.now(tz=self.pytz_utc).timestamp()
+		version_1_dict = {
+			'config_version': 1,
+			'config_generated_at': str(time_generated),
+			'bot_admin_role_id': None,
+			'create_new_tickets_in_category': False,
+			'ticket_category': {
+				'id': None,
+			},
+			'ticket_creation_message_id': None,
+		}
+
+		match version:
+			case 1:
+				return json.dumps(version_1_dict)
+
+		raise ValueError(f"Invalid default config version number in _get_default_config(self, version: int): {version}")
 
 
 class SimpleClientBot(commands.Bot):
@@ -143,6 +198,7 @@ class SimpleClientBot(commands.Bot):
 		print(f"Logged in as {self.user.name} ({self.user.id})")
 		for guild in self.guilds:
 			print(f"  Logged into guild: {guild.name} ({guild.id})")
+			self.server_config.sync_guild_id(guild.id)
 		await self.tree.sync()
 
 	async def setup_hook(self) -> None:
@@ -277,8 +333,6 @@ class SimpleClientBotEventCog(commands.Cog):
 			INSERT INTO GUILD_IDS (guild_id) VALUES (?);
 		"""
 		self.bot.server_config.cursor.execute(command)
-
-
 
 	@commands.Cog.listener()
 	async def on_guild_remove(self, guild: discord.Guild) -> None:
