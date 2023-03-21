@@ -104,8 +104,9 @@ class MultiServerConfig:
 		try:
 			command = "SELECT COUNT(*) FROM GUILD_CONFIGS WHERE GUILD_ID = ?"
 			result = self.cursor.execute(command, (guild_id,))
-			count = result.fetchone()
-			print(count)
+			count = result.fetchone()[0]
+			if count == 0:
+				self._generate_guild_config(guild_id)
 		except sqlite3.OperationalError as e:
 			logging.error(f"Error syncing guild id: {guild_id}: ")
 			logging.error(e)
@@ -113,6 +114,7 @@ class MultiServerConfig:
 			logging.error(f"Unknown error syncing guild id: {guild_id}")
 			logging.error(e)
 		self._ensure_guild_data(guild_id)
+		self.connection.commit()
 
 	def _ensure_guild_data(self, guild_id: int):
 		"""
