@@ -12,7 +12,7 @@ from discord.ext import commands
 from discord import app_commands
 
 CONFIG_FILE_PATH = '../config.json'
-BOT_VERSION = '0.0.2'
+BOT_VERSION = '0.0.3'
 
 
 class GuildConfiguration:
