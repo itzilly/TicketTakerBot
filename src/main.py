@@ -66,7 +66,6 @@ class MultiServerConfig:
 			config JSON NOT NULL DEFAULT {self._get_default_config(version=1)}
 		);
 		"""
-		print(command)
 		self.cursor.execute(command)
 		self.connection.commit()
 
