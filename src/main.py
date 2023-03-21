@@ -57,6 +57,17 @@ class MultiServerConfig:
 		"""
 		self.cursor.execute(command)
 
+		command = """
+		CREATE TABLE IF NOT EXISTS GUILD_CONFIGS (
+			ID INTEGER PRIMARY KEY,
+			GUILD_ID INTEGER UNIQUE,
+			TICKET_SECTION_ID INTEGER,
+			CREATE_TICKET_MESSAGE_ID INTEGER
+		)
+		"""
+		self.cursor.execute(command)
+		self.connection.commit()
+
 	def get_guild_config(self, guild_id: int) -> Optional[GuildConfiguration]:
 		"""
 		Retrieve a guild's configuration file
@@ -85,17 +96,6 @@ class MultiServerConfig:
 		count = self.cursor.fetchone()[0]
 		if count > 0:
 			raise ValueError(f"A row with guild_id={guild_id} already exists in GUILD_CONFIGS")
-
-		# Create guild configs table
-		command = """
-		CREATE TABLE IF NOT EXISTS GUILD_CONFIGS (
-			ID INTEGER PRIMARY KEY,
-			GUILD_ID INTEGER UNIQUE,
-			TICKET_SECTION_ID INTEGER,
-			CREATE_TICKET_MESSAGE_ID INTEGER
-		)
-		"""
-		self.cursor.execute(command)
 
 		# Create entry for guild
 		command = """
@@ -263,8 +263,30 @@ class SimpleClientBotEventCog(commands.Cog):
 		self.bot = bot
 
 	@commands.Cog.listener()
-	async def on_guild_join(self, guild: discord.Guild):
+	async def on_guild_join(self, guild: discord.Guild) -> None:
 		print(f"Joined a guild: {guild.name}")
+		command = """
+			SELECT EXISTS(SELECT 1 FROM GUILD_IDS WHERE guild_id = ?);
+		"""
+		query = self.bot.server_config.cursor.execute(command, (guild.id, ))
+		result = query.fetchall()
+		if len(result) > 1:
+			logging.error("Found multiple guild entries with the same guild ID")
+			return
+		command = """
+			INSERT INTO GUILD_IDS (guild_id) VALUES (?);
+		"""
+		self.bot.server_config.cursor.execute(command)
+
+
+
+	@commands.Cog.listener()
+	async def on_guild_remove(self, guild: discord.Guild) -> None:
+		print("I just left a guild!")
+		command = """
+			DELETE FROM GUILD_IDS WHERE guild_id = ?;
+		"""
+		self.bot.server_config.cursor.execute(command, (guild.id, ))
 
 
 def main() -> None:
