@@ -63,7 +63,7 @@ class MultiServerConfig:
 		CREATE TABLE IF NOT EXISTS GUILD_CONFIGS (
 			id INTEGER PRIMARY KEY,
 			guild_id INTEGER UNIQUE,
-			config JSON NOT NULL DEFAULT {self._get_default_config(version=1)}
+			config TEXT NOT NULL DEFAULT {self._get_default_config(version=1)}
 		);
 		"""
 		self.cursor.execute(command)
@@ -88,24 +88,24 @@ class MultiServerConfig:
 
 	def sync_guild_ids(self, guilds: list[int]):
 		"""
-		This ensures that the configs are up-to-date
-		with all guild id's the bot is in. This also will
-		ensure that a row exists for each guild in the
-		GUILD_CONFIGS table.
+		Wrapper function to pass in a list of guild id's
+		for self.sync_guild_ids(self, guild_id: int) -> None:
 		"""
 		for guild_id in guilds:
 			self.sync_guild_id(guild_id)
 
 	def sync_guild_id(self, guild_id: int) -> None:
 		"""
-		This ensures that the guild id will have an
-		empty/existing config row in the MASTER_CONFIG table.
+		This ensures that the configs are up-to-date
+		with all guild id's the bot is in. This also will
+		ensure that a row exists for each guild in the
+		GUILD_CONFIGS table.
 		"""
 		try:
-			command = "SELECT COUNT(*) FROM GUILD_CONFIGS WHERE GUILD_ID = ?"
-			result = self.cursor.execute(command, (guild_id,))
-			count = result.fetchone()[0]
-			if count == 0:
+			command = "SELECT * FROM GUILD_CONFIGS WHERE GUILD_ID = ?"
+			result = self.cursor.execute(command, (guild_id, ))
+			count = result.fetchall()
+			if len(count) == 0:
 				self._generate_guild_config(guild_id)
 		except sqlite3.OperationalError as e:
 			logging.error(f"Error syncing guild id: {guild_id}: ")
@@ -113,7 +113,7 @@ class MultiServerConfig:
 		except Exception as e:
 			logging.error(f"Unknown error syncing guild id: {guild_id}")
 			logging.error(e)
-		self._ensure_guild_data(guild_id)
+		# self._ensure_guild_data(guild_id)
 		self.connection.commit()
 
 	def _ensure_guild_data(self, guild_id: int):
@@ -136,18 +136,8 @@ class MultiServerConfig:
 			raise ValueError(f"A row with guild_id={guild_id} already exists in GUILD_CONFIGS")
 
 		# Create entry for guild
-		command = """
-		INSERT INTO GUILD_CONFIGS (
-			GUILD_ID,
-			TICKET_SECTION_ID,
-			CREATE_TICKET_MESSAGE_ID
-		) VALUES (
-			?,
-			NULL,
-			NULL
-		)
-		"""
-		self.cursor.execute(command, (guild_id,))
+		command = "INSERT INTO GUILD_CONFIGS ( GUILD_ID ) VALUES (?)"
+		self.cursor.execute(command, (guild_id, ))
 		self.connection.commit()
 
 	def _get_default_config(self, version: int):
