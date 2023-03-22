@@ -175,17 +175,12 @@ class TicketView(discord.ui.View):
         super().__init__()
         self.value = None
 
-        # Add a button that triggers a function when clicked
         self.ticket_button = discord.ui.Button(label='Open A Ticket', style=discord.ButtonStyle.green)
         self.ticket_button.callback = self.on_ticket_button_click
         self.add_item(self.ticket_button)
 
     async def on_ticket_button_click(self, interaction: discord.Interaction, button: discord.ui.Button):
-        # Your custom code here
         await interaction.response.send_message('Opening ticket...', ephemeral=True)
-
-        # Set the inner value to True and stop the View from listening to more input.
-        self.value = True
         self.stop()
 
 
@@ -334,7 +329,7 @@ class SimpleClientBotCommandCog(commands.Cog):
             attachments=[logo_file]
         )
 
-    @app_commands.command(name="ticket", description="Create a test ticket view")
+    @app_commands.command(name="test", description="Create a test ticket view")
     async def test_command(self, interaction: discord.Interaction) -> None:
         """
         Generates a temporary ticket view message to test features of the bot
