@@ -113,13 +113,23 @@ class MultiServerConfig:
 		except Exception as e:
 			logging.error(f"Unknown error syncing guild id: {guild_id}")
 			logging.error(e)
-		# self._ensure_guild_data(guild_id)
+		self._ensure_guild_data(guild_id)
 		self.connection.commit()
 
 	def _ensure_guild_data(self, guild_id: int):
 		"""
-		Ensures that the guild id has a row in the master config table
+		Ensures that the guild id has a row in the GUILD_IDS table
 		"""
+		try:
+			command = "SELECT * FROM GUILD_IDS WHERE GUILD_ID = ?"
+			result = self.cursor.execute(command, (guild_id, ))
+			count = result.fetchall()
+			if len(count) == 0:
+				command = "INSERT INTO GUILD_IDS (GUILD_ID) VALUES (?)"
+				self.cursor.execute(command, (guild_id, ))
+		except sqlite3.OperationalError as e:
+			logging.error(f"Error ensuring guild id: {guild_id}: ")
+			logging.error(e)
 
 	def _retrieve_guild_config(self, guild_id: int):
 		query = "SELECT config FROM CONFIG_MASTER WHERE GUILD_ID IS (?)"
