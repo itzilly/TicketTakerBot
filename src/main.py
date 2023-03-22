@@ -334,6 +334,15 @@ class SimpleClientBotCommandCog(commands.Cog):
             attachments=[logo_file]
         )
 
+    @app_commands.command(name="ticket", description="Create a test ticket view")
+    async def test_command(self, interaction: discord.Interaction) -> None:
+        """
+        Generates a temporary ticket view message to test features of the bot
+        """
+        iid = interaction.channel_id
+        channel = interaction.guild.get_channel(iid)
+        await channel.send(view=TicketView())
+
 
 class SimpleClientBotEventCog(commands.Cog):
     def __init__(self, bot: SimpleClientBot):
