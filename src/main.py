@@ -36,8 +36,8 @@ class MultiServerConfig:
 		self._path = '../data.sql'
 		self.pytz_utc = pytz.UTC
 
-		self.connection: Optional[sqlite3.Connection] = None
-		self.cursor: Optional[sqlite3.Cursor] = None
+		self.connection: sqlite3.Connection | None = None
+		self.cursor: sqlite3.Cursor | None = None
 		if auto_load:
 			self.load()
 
@@ -69,7 +69,7 @@ class MultiServerConfig:
 		self.cursor.execute(command)
 		self.connection.commit()
 
-	def get_guild_config(self, guild_id: int) -> Optional[str]:
+	def get_guild_config(self, guild_id: int) -> dict | None:
 		"""
 		Retrieve a guild's configuration file
 		:param guild_id:
